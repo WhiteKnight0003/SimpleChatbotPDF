@@ -54,21 +54,17 @@ def get_conversational_chain():
 
 def user_input(user_question, k=4):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-    
-    # Kiểm tra xem database có tồn tại không
+
     if not os.path.exists("./chroma_db"):
         return "Please upload and process PDF files first!"
     
-    # Load Chroma database từ thư mục đã lưu
     vector_store = Chroma(
         persist_directory="./chroma_db",
         embedding_function=embeddings
     )
     
-    # Tìm kiếm các documents tương tự
     docs = vector_store.similarity_search(user_question, k=k)
     
-    # Lấy conversational chain
     chain = get_conversational_chain()
     
     response = chain.invoke({
@@ -84,7 +80,6 @@ def main():
         layout="wide"
     )
     
-    # Custom CSS để tạo giao diện giống ChatGPT
     st.markdown("""
         <style>
         .main {
@@ -94,16 +89,14 @@ def main():
             background-color: white !important;
             color: black !important;
         }
-        /* Tin nhắn của assistant - nền xám nhạt */
+
         .stChatMessage[data-testid="assistant-message"] {
             background-color: #f7f7f8 !important;
             color: black !important;
         }
-        /* Tất cả text trong chat message */
         .stChatMessage p, .stChatMessage div {
             color: black !important;
         }
-        /* Style cho ô input chat */
         .stChatInput > div {
             background-color: white !important;
         }
@@ -127,7 +120,6 @@ def main():
         </style>
     """, unsafe_allow_html=True)
     
-    # Initialize session state
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
@@ -159,11 +151,9 @@ def main():
             st.session_state.messages = []
             st.rerun()
     
-    # Main chat interface
     st.title("PDF Chat Assistant")
     st.markdown("Ask questions about your PDF documents")
     
-    # Display chat messages
     chat_container = st.container()
     with chat_container:
         for message in st.session_state.messages:
@@ -172,23 +162,19 @@ def main():
     
     # Chat input
     if prompt := st.chat_input("Type your question here..."):
-        # Check if PDF is processed
         if not st.session_state.pdf_processed and not os.path.exists("./chroma_db"):
             with st.chat_message("assistant"):
                 st.warning("Please upload and process PDF files first!")
         else:
-            # Add user message to chat
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
             
-            # Get bot response
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
                     response = user_input(prompt)
                     st.markdown(response)
             
-            # Add assistant response to chat
             st.session_state.messages.append({"role": "assistant", "content": response})
 
 if __name__ == "__main__":
